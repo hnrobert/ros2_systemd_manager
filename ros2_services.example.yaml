@@ -11,6 +11,7 @@
 # - install-only           Install unit files only, do not start or enable
 # - install-start-enable   Install + start + enable on boot
 # - uninstall              Uninstall (stop, disable, remove unit files)
+# - update-makefile        Regenerate Makefile only (no systemd changes)
 
 actions:
   supported:
@@ -31,6 +32,10 @@ runtime:
   shell: /bin/bash
   restart: on-failure
   restart_sec: 3
+
+makefile:
+  # Path for generated Makefile. Relative path is based on this YAML directory.
+  output_path: ./Makefile
 
 workspaces:
   # Workspace key, selectable via --workspace-key

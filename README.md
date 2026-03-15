@@ -7,8 +7,10 @@ A YAML-driven utility for managing ROS2 launch services as `systemd` units.
 - Install unit files only (`install-only`)
 - Install, start, and enable units on boot (`install-start-enable`)
 - Uninstall units (stop, disable, remove files) (`uninstall`)
+- Regenerate Makefile only (`update-makefile`)
 - Manage multiple workspaces through a single YAML configuration
 - Define per-service dependencies via `depends_on`
+- Auto-generate a Makefile after script execution for fast service control (`make start/stop/...`)
 
 ## Requirements
 
@@ -36,6 +38,7 @@ Configure everything in `ros2_services.yaml`:
 - `systemd.unit_dir`: unit file directory (default `/etc/systemd/system`)
 - `systemd.wanted_by`: install target (default `multi-user.target`)
 - `runtime`: service runtime settings (`user`, `group`, `home`, `shell`, restart policy)
+- `makefile.output_path`: output path for generated Makefile (relative path is resolved from YAML directory)
 - `workspaces`: one or more workspace definitions
   - `path`: absolute workspace path
   - `setup_script`: relative path from workspace (for example `install/setup.bash`)
@@ -58,6 +61,7 @@ sudo python3 ros2_systemd_manager.py [action] [--config PATH] [--workspace-key K
 - `install-only`
 - `install-start-enable`
 - `uninstall`
+- `update-makefile`
 
 If `action` is omitted, the script uses `actions.default_action` from YAML.
 
@@ -92,6 +96,37 @@ Use a custom config path:
 ```bash
 sudo python3 ros2_systemd_manager.py install-only --config /path/to/ros2_services.yaml
 ```
+
+Regenerate Makefile only:
+
+```bash
+python3 ros2_systemd_manager.py update-makefile --workspace-key infantry_ws
+```
+
+## Generated Makefile
+
+After each successful script run, the manager writes a Makefile to `makefile.output_path` from YAML.
+
+Common targets:
+
+- `make install-only`
+- `make install-start-enable`
+- `make uninstall`
+- `make start`
+- `make stop`
+- `make restart`
+- `make status`
+- `make enable`
+- `make disable`
+- `make update`
+
+`make update` runs:
+
+```bash
+python3 ros2_systemd_manager.py update-makefile --config <yaml> --workspace-key <key>
+```
+
+This allows the Makefile to refresh itself from YAML, including when `makefile.output_path` changes.
 
 ## Generated Unit Behavior
 
