@@ -11,7 +11,8 @@ Goals:
 3) If no action is provided, use actions.default_action from YAML.
 
 Design notes:
-- Services run as non-root by default; set service.use_root: true to run a service as root.
+- Services follow runtime user/group/home by default.
+- Set service.use_root: true to force a specific service to run as root.
 - Each service gets an independent systemd unit for easier troubleshooting.
 - systemd daemon-reload runs after install/uninstall to apply changes.
 """
@@ -19,9 +20,7 @@ Design notes:
 from __future__ import annotations
 
 import argparse
-import grp
 import os
-import pwd
 import subprocess
 import sys
 from pathlib import Path
@@ -119,34 +118,6 @@ def validate_config(config: Dict[str, Any]) -> None:
                 unit_name = svc.get("unit_name", "<unknown>")
                 err(f"Service {unit_name} has invalid use_root: expected true/false.")
                 sys.exit(1)
-
-
-def resolve_non_root_identity(runtime: Dict[str, Any]) -> tuple[str, str, str]:
-    """Resolve non-root service identity from runtime or current OS user."""
-    fallback_user = os.environ.get(
-        "SUDO_USER") or os.environ.get("USER") or "nobody"
-
-    try:
-        pw_entry = pwd.getpwnam(fallback_user)
-        fallback_group = grp.getgrgid(pw_entry.pw_gid).gr_name
-        fallback_home = pw_entry.pw_dir
-    except KeyError:
-        fallback_group = fallback_user
-        fallback_home = str(Path.home())
-
-    user = str(runtime.get("user", fallback_user))
-    group = str(runtime.get("group", fallback_group))
-    home = str(runtime.get("home", fallback_home))
-
-    # Keep default behavior non-root unless service.use_root is enabled.
-    if user == "root":
-        user = fallback_user
-    if group == "root":
-        group = fallback_group
-    if home == "/root":
-        home = fallback_home
-
-    return user, group, home
 
 
 def resolve_action(cli_action: str | None, config: Dict[str, Any]) -> str:
@@ -421,7 +392,9 @@ def build_unit_content(
         group = "root"
         home = "/root"
     else:
-        user, group, home = resolve_non_root_identity(runtime)
+        user = str(runtime.get("user", "root"))
+        group = str(runtime.get("group", "root"))
+        home = str(runtime.get("home", "/root"))
 
     restart = runtime.get("restart", "on-failure")
     restart_sec = runtime.get("restart_sec", 3)
