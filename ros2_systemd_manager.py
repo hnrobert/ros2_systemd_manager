@@ -119,6 +119,15 @@ def validate_config(config: Dict[str, Any]) -> None:
                 err(f"Service {unit_name} has invalid use_root: expected true/false.")
                 sys.exit(1)
 
+            service_options = svc.get("service_options")
+            if service_options is not None:
+                unit_name = svc.get("unit_name", "<unknown>")
+                if not isinstance(service_options, list) or not all(isinstance(item, str) and item.strip() for item in service_options):
+                    err(
+                        f"Service {unit_name} has invalid service_options: expected a string list."
+                    )
+                    sys.exit(1)
+
 
 def resolve_action(cli_action: str | None, config: Dict[str, Any]) -> str:
     """
@@ -376,6 +385,7 @@ def build_unit_content(
     setup_script_rel: str,
     launch_command: str,
     depends_on: List[str],
+    service_options: List[str],
     use_root: bool,
     runtime: Dict[str, Any],
     wanted_by: str,
@@ -404,6 +414,8 @@ def build_unit_content(
     after_targets = ["network-online.target", *depends_on]
     after_line = " ".join(after_targets)
     requires_line = f"Requires={' '.join(depends_on)}\n" if depends_on else ""
+    service_options_lines = "\n".join(service_options)
+    service_options_block = f"{service_options_lines}\n" if service_options_lines else ""
 
     return f"""[Unit]
 Description={description}
@@ -417,7 +429,7 @@ Group={group}
 WorkingDirectory={workspace_path}
 Environment=HOME={home}
 ExecStart={shell} -lc 'source "{setup_script_abs}" && exec {launch_command}'
-Restart={restart}
+{service_options_block}Restart={restart}
 RestartSec={restart_sec}
 
 [Install]
@@ -468,6 +480,7 @@ def install_only(config: Dict[str, Any], workspace_key: str) -> List[str]:
         description = svc.get("description", unit_name)
         launch_command = svc["launch_command"]
         depends_on = svc.get("depends_on", [])
+        service_options = svc.get("service_options", [])
         use_root = bool(svc.get("use_root", False))
 
         if not isinstance(depends_on, list):
@@ -491,6 +504,7 @@ def install_only(config: Dict[str, Any], workspace_key: str) -> List[str]:
             setup_script_rel=setup_script_rel,
             launch_command=launch_command,
             depends_on=depends_on,
+            service_options=service_options,
             use_root=use_root,
             runtime=runtime_cfg,
             wanted_by=wanted_by,

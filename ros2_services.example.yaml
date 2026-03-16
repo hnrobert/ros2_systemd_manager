@@ -6,6 +6,8 @@
 # 3) each service is converted into a dedicated systemd unit file
 # 4) services can optionally declare depends_on (list) for unit dependencies
 #    Example: if A depends_on B, unit A will include Requires=B and After=B
+# 5) services can optionally declare service_options (list of raw systemd [Service] lines)
+#    Example: CapabilityBoundingSet=... / AmbientCapabilities=...
 #
 # Supported actions:
 # - install-only           Install unit files only, do not start or enable
@@ -25,10 +27,11 @@ systemd:
   wanted_by: multi-user.target
 
 runtime:
-  # systemd service runtime identity (kept as root to match current ros2 usage)
-  user: root
-  group: root
-  home: /root
+  # Default runtime identity for services when use_root is omitted or false.
+  # Set service.use_root: true to force that specific service to run as root.
+  user: infantry
+  group: infantry
+  home: /home/infantry
   shell: /bin/bash
   restart: on-failure
   restart_sec: 3
@@ -49,7 +52,10 @@ workspaces:
 
       - unit_name: ros2-soem-bringup.service
         description: ROS2 SOEM Bringup
-        use_root: true
+        use_root: false
+        service_options:
+          - CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+          - AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
         launch_command: ros2 launch soem_bringup bringup.launch.py
 
       - unit_name: ros2-infantry-chassis.service
