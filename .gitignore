@@ -2,3 +2,4 @@
 __pycache__/
 
 ros2_services.yaml
+*.egg-info

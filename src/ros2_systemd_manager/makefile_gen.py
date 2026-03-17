@@ -105,12 +105,12 @@ logs-static-{service_key}:
 
 SUDO ?= sudo
 SCRIPT ?= {script_default}
-CONFIG ?= {config_default}
+CONFIG ?=
 WORKSPACE_KEY := {workspace_key}
 UNITS := {quoted_units}
 
 EFFECTIVE_SCRIPT := $(if $(strip $(SCRIPT)),$(SCRIPT),{script_default})
-EFFECTIVE_CONFIG := $(if $(strip $(CONFIG)),$(CONFIG),{config_default})
+EFFECTIVE_CONFIG := $(if $(strip $(CONFIG)),$(CONFIG),$(firstword $(wildcard ./ros2_services.yaml ./*.yaml)))
 
 .PHONY: {phony_targets}
 
@@ -118,32 +118,39 @@ help:
 \t@echo \"Targets:\"
 	@echo \"  make install                # install unit files only\"
 	@echo \"  make apply                  # install + start + enable\"
-\t@echo \"  make start                  # systemctl start all configured units\"
-\t@echo \"  make stop                   # systemctl stop all configured units\"
-\t@echo \"  make restart                # systemctl restart all configured units\"
-\t@echo \"  make status                 # systemctl status all configured units\"
-\t@echo \"  make enable                 # systemctl enable all configured units\"
-\t@echo \"  make disable                # systemctl disable all configured units\"
-\t@echo \"  make logs                   # show last 200 log lines for all configured units\"
-\t@echo \"  make logs-follow            # follow logs for all configured units\"
-\t@echo \"  make <op>-<service>         # op in start/stop/restart/status/enable/disable/logs\"
-\t@echo \"  make logs-recent-<service>  # show last 200 log lines for one service\"
-\t@echo \"  make logs-static-<service>  # alias of logs-recent-<service>\"
-\t@echo \"  make uninstall              # uninstall all configured units\"
-\t@echo \"  make update                 # stop old + uninstall removed + install/start/enable + refresh Makefile\"
+	@echo \"  make start                  # systemctl start all configured units\"
+	@echo \"  make stop                   # systemctl stop all configured units\"
+	@echo \"  make restart                # systemctl restart all configured units\"
+	@echo \"  make status                 # systemctl status all configured units\"
+	@echo \"  make enable                 # systemctl enable all configured units\"
+	@echo \"  make disable                # systemctl disable all configured units\"
+	@echo \"  make logs                   # show last 200 log lines for all configured units\"
+	@echo \"  make logs-follow            # follow logs for all configured units\"
+	@echo \"  make <op>-<service>         # op in start/stop/restart/status/enable/disable/logs\"
+	@echo \"  make logs-recent-<service>  # show last 200 log lines for one service\"
+	@echo \"  make logs-static-<service>  # alias of logs-recent-<service>\"
+	@echo \"  make uninstall              # uninstall all configured units\"
+	@echo \"  make update                 # stop old + uninstall removed + install/start/enable + refresh Makefile\"
 	@echo \"  make makefile               # refresh Makefile only (no systemd changes)\"
+	@echo \"  make <target> CONFIG=./file.yaml  # override auto-discovered yaml\"
 
-install:
+ensure-config:
+	@if [ -z "$(EFFECTIVE_CONFIG)" ]; then \\
+		echo "ERROR: no yaml config found in current directory (expected ./ros2_services.yaml or ./*.yaml)."; \\
+		exit 1; \\
+	fi
+
+install: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) install --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\"
 
-apply:
+apply: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) apply --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\"
 
 install-only: install
 
 install-start-enable: apply
 
-uninstall:
+uninstall: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) uninstall --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\"
 
 start:
@@ -170,10 +177,10 @@ logs:
 logs-follow:
 \t$(SUDO) journalctl $(foreach u,$(UNITS),-u $(u)) -f
 
-update:
+update: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) update --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\" --previous-makefile \"$(firstword $(MAKEFILE_LIST))\"
 
-makefile:
+makefile: ensure-config
 	$(EFFECTIVE_SCRIPT) makefile --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\"
 
 update-makefile: makefile

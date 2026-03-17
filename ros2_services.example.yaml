@@ -16,9 +16,6 @@
 # - update                 Stop previous units, remove stale units, then install/start/enable current units
 # - makefile               Regenerate Makefile only (no systemd changes)
 
-actions:
-  default_action: apply
-
 systemd:
   unit_dir: /etc/systemd/system
   wanted_by: multi-user.target
@@ -26,23 +23,17 @@ systemd:
 runtime:
   # Default runtime identity for services when use_root is omitted or false.
   # Set service.use_root: true to force that specific service to run as root.
-  user: infantry
-  group: infantry
-  home: /home/infantry
+  user: user
+  group: user
+  home: /home/user
   shell: /bin/bash
   restart: on-failure
   restart_sec: 3
 
-makefile:
-  # Path for generated Makefile. Relative path is based on this YAML directory.
-  output_path: ./Makefile
-  # CLI command used by generated Makefile recipes.
-  command: ros2-systemd-manager
-
 workspaces:
   # Workspace key, selectable via --workspace-key
-  infantry_ws:
-    path: /home/infantry/infantry_ws
+  default_ws:
+    path: /home/user/default_ws
     setup_script: install/setup.bash
     services:
       - unit_name: ros2-foxglove-bridge.service

@@ -26,10 +26,15 @@ def load_yaml_config(config_path: Path) -> Dict[str, Any]:
 
 def validate_config(config: Dict[str, Any]) -> None:
     """Validate required top-level fields and service-level options."""
-    for key in ["actions", "systemd", "runtime", "workspaces"]:
+    for key in ["systemd", "runtime", "workspaces"]:
         if key not in config:
             err(f"Missing required config field: {key}")
             sys.exit(1)
+
+    actions_cfg = config.get("actions")
+    if actions_cfg is not None and not isinstance(actions_cfg, dict):
+        err("actions must be a mapping when provided.")
+        sys.exit(1)
 
     workspaces = config.get("workspaces")
     if not isinstance(workspaces, dict) or not workspaces:
