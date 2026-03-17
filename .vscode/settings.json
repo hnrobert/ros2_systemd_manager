@@ -1,8 +1,12 @@
 {
     "cSpell.words": [
         "bringup",
+        "firstword",
         "geteuid",
         "journalctl",
         "soem"
+    ],
+    "python.analysis.extraPaths": [
+        "./src"
     ]
 }
