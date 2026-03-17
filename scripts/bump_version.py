@@ -9,7 +9,7 @@ Usage:
 
 It prints the normalized version on the first line and exits with:
  - 0 when changes were made and files updated
- - 2 when no changes required (already at requested version)
+ - 0 when no changes required (already at requested version)
  - 1 on validation or other errors
 """
 
@@ -70,7 +70,7 @@ def main() -> int:
 
     if not files_changed:
         print(f"No files needed updating; already at version {new_version}.")
-        return 2
+        return 0
 
     print("Updated files:")
     for file_path in files_changed:
