@@ -60,7 +60,8 @@ Primary targets:
 - `make update`
 - `make makefile`
 - `make start|stop|restart|status|enable|disable`
-- `make logs` / `make logs-follow`
+- `make logs` / `make logs-recent`
+- `make <op>-<service>` (op in start/stop/restart/status/enable/disable/logs/logs-recent)
 
 Config behavior:
 

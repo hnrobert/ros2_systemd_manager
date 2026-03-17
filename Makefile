@@ -10,7 +10,7 @@ UNITS := ros2-foxglove-bridge.service ros2-soem-bringup.service ros2-infantry-ch
 EFFECTIVE_SCRIPT := $(if $(strip $(SCRIPT)),$(SCRIPT),ros2-systemd-manager)
 EFFECTIVE_CONFIG := $(if $(strip $(CONFIG)),$(CONFIG),$(firstword $(wildcard ./ros2_services.yaml ./*.yaml)))
 
-.PHONY: help ensure-config install apply uninstall start stop restart status enable disable logs logs-follow update makefile start-ros2-foxglove-bridge stop-ros2-foxglove-bridge restart-ros2-foxglove-bridge status-ros2-foxglove-bridge enable-ros2-foxglove-bridge disable-ros2-foxglove-bridge logs-ros2-foxglove-bridge logs-recent-ros2-foxglove-bridge logs-static-ros2-foxglove-bridge start-ros2-soem-bringup stop-ros2-soem-bringup restart-ros2-soem-bringup status-ros2-soem-bringup enable-ros2-soem-bringup disable-ros2-soem-bringup logs-ros2-soem-bringup logs-recent-ros2-soem-bringup logs-static-ros2-soem-bringup start-ros2-infantry-chassis stop-ros2-infantry-chassis restart-ros2-infantry-chassis status-ros2-infantry-chassis enable-ros2-infantry-chassis disable-ros2-infantry-chassis logs-ros2-infantry-chassis logs-recent-ros2-infantry-chassis logs-static-ros2-infantry-chassis
+.PHONY: help ensure-config install apply uninstall start stop restart status enable disable logs logs-recent update makefile start-ros2-foxglove-bridge stop-ros2-foxglove-bridge restart-ros2-foxglove-bridge status-ros2-foxglove-bridge enable-ros2-foxglove-bridge disable-ros2-foxglove-bridge logs-ros2-foxglove-bridge logs-recent-ros2-foxglove-bridge start-ros2-soem-bringup stop-ros2-soem-bringup restart-ros2-soem-bringup status-ros2-soem-bringup enable-ros2-soem-bringup disable-ros2-soem-bringup logs-ros2-soem-bringup logs-recent-ros2-soem-bringup start-ros2-infantry-chassis stop-ros2-infantry-chassis restart-ros2-infantry-chassis status-ros2-infantry-chassis enable-ros2-infantry-chassis disable-ros2-infantry-chassis logs-ros2-infantry-chassis logs-recent-ros2-infantry-chassis
 
 help:
 	@echo "Targets:"
@@ -22,11 +22,9 @@ help:
 	@echo "  make status                 # systemctl status all configured units"
 	@echo "  make enable                 # systemctl enable all configured units"
 	@echo "  make disable                # systemctl disable all configured units"
-	@echo "  make logs                   # show last 200 log lines for all configured units"
-	@echo "  make logs-follow            # follow logs for all configured units"
-	@echo "  make <op>-<service>         # op in start/stop/restart/status/enable/disable/logs"
-	@echo "  make logs-recent-<service>  # show last 200 log lines for one service"
-	@echo "  make logs-static-<service>  # alias of logs-recent-<service>"
+	@echo "  make logs                   # follow logs for all configured units"
+	@echo "  make logs-recent            # show last 200 log lines for all configured units"
+	@echo "  make <op>-<service>         # op in start/stop/restart/status/enable/disable/logs/logs-recent"
 	@echo "  make uninstall              # uninstall all configured units"
 	@echo "  make update                 # stop old + uninstall removed + install/start/enable + refresh Makefile"
 	@echo "  make makefile               # refresh Makefile only (no systemd changes)"
@@ -66,10 +64,10 @@ disable:
 	$(SUDO) systemctl disable $(UNITS)
 
 logs:
-	$(SUDO) journalctl $(foreach u,$(UNITS),-u $(u)) -n 200 --no-pager
-
-logs-follow:
 	$(SUDO) journalctl $(foreach u,$(UNITS),-u $(u)) -f
+
+logs-recent:
+	$(SUDO) journalctl $(foreach u,$(UNITS),-u $(u)) -n 200 --no-pager
 
 update: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) update --config "$(EFFECTIVE_CONFIG)" --workspace-key "$(WORKSPACE_KEY)" --previous-makefile "$(firstword $(MAKEFILE_LIST))"
@@ -102,9 +100,6 @@ logs-ros2-foxglove-bridge:
 logs-recent-ros2-foxglove-bridge:
 	$(SUDO) journalctl -u "ros2-foxglove-bridge.service" -n 200 --no-pager
 
-logs-static-ros2-foxglove-bridge:
-	$(SUDO) journalctl -u "ros2-foxglove-bridge.service" -n 200 --no-pager
-
 
 start-ros2-soem-bringup:
 	$(SUDO) systemctl start "ros2-soem-bringup.service"
@@ -130,9 +125,6 @@ logs-ros2-soem-bringup:
 logs-recent-ros2-soem-bringup:
 	$(SUDO) journalctl -u "ros2-soem-bringup.service" -n 200 --no-pager
 
-logs-static-ros2-soem-bringup:
-	$(SUDO) journalctl -u "ros2-soem-bringup.service" -n 200 --no-pager
-
 
 start-ros2-infantry-chassis:
 	$(SUDO) systemctl start "ros2-infantry-chassis.service"
@@ -156,7 +148,4 @@ logs-ros2-infantry-chassis:
 	$(SUDO) journalctl -u "ros2-infantry-chassis.service" -n 100 -f
 
 logs-recent-ros2-infantry-chassis:
-	$(SUDO) journalctl -u "ros2-infantry-chassis.service" -n 200 --no-pager
-
-logs-static-ros2-infantry-chassis:
 	$(SUDO) journalctl -u "ros2-infantry-chassis.service" -n 200 --no-pager

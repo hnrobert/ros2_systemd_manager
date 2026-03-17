@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import getpass
+from importlib import resources
 from pathlib import Path
 import re
 
@@ -11,13 +12,23 @@ from .runtime import err, log
 
 
 def _load_example_template_text() -> str:
-    """Load YAML template text from repository example file."""
-    candidate = Path(__file__).resolve(
+    """Load YAML template text from packaged data, with repo fallback."""
+    packaged_template = resources.files("ros2_systemd_manager").joinpath(
+        "ros2_services.example.yaml"
+    )
+    if packaged_template.is_file():
+        return packaged_template.read_text(encoding="utf-8")
+
+    repo_candidate = Path(__file__).resolve(
     ).parents[2] / "ros2_services.example.yaml"
-    if not candidate.exists():
-        err(f"Example template not found: {candidate}")
-        raise SystemExit(1)
-    return candidate.read_text(encoding="utf-8")
+    if repo_candidate.exists():
+        return repo_candidate.read_text(encoding="utf-8")
+
+    err(
+        "Example template not found in package data or repository root. "
+        "Expected ros2_services.example.yaml to be bundled."
+    )
+    raise SystemExit(1)
 
 
 def _replace_first_yaml_line_value(template_text: str, key: str, value: str) -> str:

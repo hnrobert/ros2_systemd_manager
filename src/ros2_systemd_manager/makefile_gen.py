@@ -39,7 +39,6 @@ def build_makefile_content(
                 f"disable-{service_key}",
                 f"logs-{service_key}",
                 f"logs-recent-{service_key}",
-                f"logs-static-{service_key}",
             ]
         )
 
@@ -68,9 +67,6 @@ logs-{service_key}:
 
 logs-recent-{service_key}:
 \t$(SUDO) journalctl -u \"{unit_name}\" -n 200 --no-pager
-
-logs-static-{service_key}:
-\t$(SUDO) journalctl -u \"{unit_name}\" -n 200 --no-pager
 """.rstrip()
         )
 
@@ -88,7 +84,7 @@ logs-static-{service_key}:
             "enable",
             "disable",
             "logs",
-            "logs-follow",
+            "logs-recent",
             "update",
             "makefile",
             *per_service_targets,
@@ -121,11 +117,9 @@ help:
 	@echo \"  make status                 # systemctl status all configured units\"
 	@echo \"  make enable                 # systemctl enable all configured units\"
 	@echo \"  make disable                # systemctl disable all configured units\"
-	@echo \"  make logs                   # show last 200 log lines for all configured units\"
-	@echo \"  make logs-follow            # follow logs for all configured units\"
-	@echo \"  make <op>-<service>         # op in start/stop/restart/status/enable/disable/logs\"
-	@echo \"  make logs-recent-<service>  # show last 200 log lines for one service\"
-	@echo \"  make logs-static-<service>  # alias of logs-recent-<service>\"
+	@echo \"  make logs                   # follow logs for all configured units\"
+	@echo \"  make logs-recent            # show last 200 log lines for all configured units\"
+	@echo \"  make <op>-<service>         # op in start/stop/restart/status/enable/disable/logs/logs-recent\"
 	@echo \"  make uninstall              # uninstall all configured units\"
 	@echo \"  make update                 # stop old + uninstall removed + install/start/enable + refresh Makefile\"
 	@echo \"  make makefile               # refresh Makefile only (no systemd changes)\"
@@ -165,10 +159,10 @@ disable:
 \t$(SUDO) systemctl disable $(UNITS)
 
 logs:
-\t$(SUDO) journalctl $(foreach u,$(UNITS),-u $(u)) -n 200 --no-pager
+	$(SUDO) journalctl $(foreach u,$(UNITS),-u $(u)) -f
 
-logs-follow:
-\t$(SUDO) journalctl $(foreach u,$(UNITS),-u $(u)) -f
+logs-recent:
+	$(SUDO) journalctl $(foreach u,$(UNITS),-u $(u)) -n 200 --no-pager
 
 update: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) update --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\" --previous-makefile \"$(firstword $(MAKEFILE_LIST))\"
