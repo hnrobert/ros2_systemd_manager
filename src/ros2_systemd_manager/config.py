@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 
-from .actions import SUPPORTED_ACTIONS, normalize_action
+from .actions import SUPPORTED_ACTIONS
 from .runtime import err
 
 
@@ -88,12 +88,11 @@ def validate_config(config: Dict[str, Any]) -> None:
 def resolve_action(cli_action: Optional[str], config: Dict[str, Any]) -> str:
     """Resolve action from CLI or YAML defaults."""
     default_action = config.get("actions", {}).get("default_action", "apply")
-    action_raw = cli_action or default_action
-    action = normalize_action(action_raw)
+    action = cli_action or default_action
 
     if action not in SUPPORTED_ACTIONS:
         err(
-            f"Unsupported action: {action_raw}. "
+            f"Unsupported action: {action}. "
             f"Allowed: {sorted(SUPPORTED_ACTIONS)}"
         )
         sys.exit(1)

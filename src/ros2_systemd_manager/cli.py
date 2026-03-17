@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from .actions import normalize_action
 from .config import (
     load_yaml_config,
     resolve_action,
@@ -62,7 +61,7 @@ def parse_args() -> argparse.Namespace:
 
 def run() -> None:
     args = parse_args()
-    action_arg = normalize_action(args.action) if args.action else None
+    action_arg = args.action
 
     if action_arg == "init":
         target_config = Path(args.config) if args.config else (

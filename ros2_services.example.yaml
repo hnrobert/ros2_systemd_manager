@@ -16,6 +16,15 @@
 # - update                 Stop previous units, remove stale units, then install/start/enable current units
 # - makefile               Regenerate Makefile only (no systemd changes)
 
+# Optional; when omitted, default action is `apply`.
+# actions:
+#   default_action: apply
+
+# Optional; when omitted defaults are used.
+# makefile:
+#   output_path: ./Makefile
+#   command: ros2-systemd-manager
+
 systemd:
   unit_dir: /etc/systemd/system
   wanted_by: multi-user.target

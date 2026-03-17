@@ -4,13 +4,13 @@
 SUDO ?= sudo
 SCRIPT ?= ros2-systemd-manager
 CONFIG ?=
-WORKSPACE_KEY := infantry_ws
+WORKSPACE_KEY := default_ws
 UNITS := ros2-foxglove-bridge.service ros2-soem-bringup.service ros2-infantry-chassis.service
 
 EFFECTIVE_SCRIPT := $(if $(strip $(SCRIPT)),$(SCRIPT),ros2-systemd-manager)
 EFFECTIVE_CONFIG := $(if $(strip $(CONFIG)),$(CONFIG),$(firstword $(wildcard ./ros2_services.yaml ./*.yaml)))
 
-.PHONY: help install apply uninstall start stop restart status enable disable logs logs-follow update makefile install-only install-start-enable update-makefile start-ros2-foxglove-bridge stop-ros2-foxglove-bridge restart-ros2-foxglove-bridge status-ros2-foxglove-bridge enable-ros2-foxglove-bridge disable-ros2-foxglove-bridge logs-ros2-foxglove-bridge logs-recent-ros2-foxglove-bridge logs-static-ros2-foxglove-bridge start-ros2-soem-bringup stop-ros2-soem-bringup restart-ros2-soem-bringup status-ros2-soem-bringup enable-ros2-soem-bringup disable-ros2-soem-bringup logs-ros2-soem-bringup logs-recent-ros2-soem-bringup logs-static-ros2-soem-bringup start-ros2-infantry-chassis stop-ros2-infantry-chassis restart-ros2-infantry-chassis status-ros2-infantry-chassis enable-ros2-infantry-chassis disable-ros2-infantry-chassis logs-ros2-infantry-chassis logs-recent-ros2-infantry-chassis logs-static-ros2-infantry-chassis
+.PHONY: help ensure-config install apply uninstall start stop restart status enable disable logs logs-follow update makefile start-ros2-foxglove-bridge stop-ros2-foxglove-bridge restart-ros2-foxglove-bridge status-ros2-foxglove-bridge enable-ros2-foxglove-bridge disable-ros2-foxglove-bridge logs-ros2-foxglove-bridge logs-recent-ros2-foxglove-bridge logs-static-ros2-foxglove-bridge start-ros2-soem-bringup stop-ros2-soem-bringup restart-ros2-soem-bringup status-ros2-soem-bringup enable-ros2-soem-bringup disable-ros2-soem-bringup logs-ros2-soem-bringup logs-recent-ros2-soem-bringup logs-static-ros2-soem-bringup start-ros2-infantry-chassis stop-ros2-infantry-chassis restart-ros2-infantry-chassis status-ros2-infantry-chassis enable-ros2-infantry-chassis disable-ros2-infantry-chassis logs-ros2-infantry-chassis logs-recent-ros2-infantry-chassis logs-static-ros2-infantry-chassis
 
 help:
 	@echo "Targets:"
@@ -44,10 +44,6 @@ install: ensure-config
 apply: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) apply --config "$(EFFECTIVE_CONFIG)" --workspace-key "$(WORKSPACE_KEY)"
 
-install-only: install
-
-install-start-enable: apply
-
 uninstall: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) uninstall --config "$(EFFECTIVE_CONFIG)" --workspace-key "$(WORKSPACE_KEY)"
 
@@ -80,8 +76,6 @@ update: ensure-config
 
 makefile: ensure-config
 	$(EFFECTIVE_SCRIPT) makefile --config "$(EFFECTIVE_CONFIG)" --workspace-key "$(WORKSPACE_KEY)"
-
-update-makefile: makefile
 
 
 start-ros2-foxglove-bridge:

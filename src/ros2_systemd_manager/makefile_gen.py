@@ -9,7 +9,6 @@ from .runtime import err, log
 def build_makefile_content(
     *,
     script_default: str,
-    config_default: str,
     workspace_key: str,
     unit_names: List[str],
 ) -> str:
@@ -78,6 +77,7 @@ logs-static-{service_key}:
     phony_targets = " ".join(
         [
             "help",
+            "ensure-config",
             "install",
             "apply",
             "uninstall",
@@ -91,9 +91,6 @@ logs-static-{service_key}:
             "logs-follow",
             "update",
             "makefile",
-            "install-only",
-            "install-start-enable",
-            "update-makefile",
             *per_service_targets,
         ]
     )
@@ -146,10 +143,6 @@ install: ensure-config
 apply: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) apply --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\"
 
-install-only: install
-
-install-start-enable: apply
-
 uninstall: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) uninstall --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\"
 
@@ -183,8 +176,6 @@ update: ensure-config
 makefile: ensure-config
 	$(EFFECTIVE_SCRIPT) makefile --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\"
 
-update-makefile: makefile
-
 {per_service_blocks_text}
 """
 
@@ -206,11 +197,8 @@ def write_makefile(config: Dict[str, Any], config_path: Path, workspace_key: str
     script_default_raw = str(makefile_cfg.get(
         "command", "ros2-systemd-manager")).strip()
     script_default = script_default_raw or "ros2-systemd-manager"
-    config_default = str(config_path.resolve())
-
     content = build_makefile_content(
         script_default=script_default,
-        config_default=config_default,
         workspace_key=workspace_key,
         unit_names=unit_names,
     )
