@@ -116,7 +116,8 @@ def resolve_workspace_key(cli_workspace_key: Optional[str], config: Dict[str, An
 def resolve_makefile_path(config: Dict[str, Any], config_path: Path) -> Path:
     """Resolve output path for generated Makefile."""
     makefile_cfg = config.get("makefile", {})
-    output_path_raw = makefile_cfg.get("output_path", "Makefile")
+    output_path_raw = makefile_cfg.get(
+        "output_path", "ros2-systemd-manager.mk")
 
     if not isinstance(output_path_raw, str) or not output_path_raw.strip():
         err("makefile.output_path must be a non-empty string.")

@@ -22,7 +22,7 @@
 
 # Optional; when omitted defaults are used.
 # makefile:
-#   output_path: ./Makefile
+#   output_path: ./ros2-systemd-manager.mk
 #   command: ros2-systemd-manager
 
 systemd:
