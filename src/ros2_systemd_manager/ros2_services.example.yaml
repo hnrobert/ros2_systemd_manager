@@ -10,6 +10,7 @@
 #    Example: CapabilityBoundingSet=... / AmbientCapabilities=...
 #
 # Supported actions:
+# - upgrade                Self-upgrade this tool via pip install --upgrade
 # - install                Install unit files only, do not start or enable
 # - apply                  Install + start + enable on boot
 # - uninstall              Uninstall (stop, disable, remove unit files)

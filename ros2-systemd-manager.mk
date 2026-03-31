@@ -11,10 +11,11 @@ GENERATED_MK := $(lastword $(MAKEFILE_LIST))
 EFFECTIVE_SCRIPT := $(if $(strip $(SCRIPT)),$(SCRIPT),ros2-systemd-manager)
 EFFECTIVE_CONFIG := $(if $(strip $(CONFIG)),$(CONFIG),$(firstword $(wildcard ./ros2_services.yaml ./*.yaml)))
 
-.PHONY: help ensure-config install apply uninstall start stop restart status enable disable logs logs-recent update makefile start-ros2-foxglove-bridge stop-ros2-foxglove-bridge restart-ros2-foxglove-bridge status-ros2-foxglove-bridge enable-ros2-foxglove-bridge disable-ros2-foxglove-bridge logs-ros2-foxglove-bridge logs-recent-ros2-foxglove-bridge start-ros2-soem-bringup stop-ros2-soem-bringup restart-ros2-soem-bringup status-ros2-soem-bringup enable-ros2-soem-bringup disable-ros2-soem-bringup logs-ros2-soem-bringup logs-recent-ros2-soem-bringup start-ros2-infantry-chassis stop-ros2-infantry-chassis restart-ros2-infantry-chassis status-ros2-infantry-chassis enable-ros2-infantry-chassis disable-ros2-infantry-chassis logs-ros2-infantry-chassis logs-recent-ros2-infantry-chassis
+.PHONY: help upgrade ensure-config install apply uninstall start stop restart status enable disable logs logs-recent update makefile start-ros2-foxglove-bridge stop-ros2-foxglove-bridge restart-ros2-foxglove-bridge status-ros2-foxglove-bridge enable-ros2-foxglove-bridge disable-ros2-foxglove-bridge logs-ros2-foxglove-bridge logs-recent-ros2-foxglove-bridge start-ros2-soem-bringup stop-ros2-soem-bringup restart-ros2-soem-bringup status-ros2-soem-bringup enable-ros2-soem-bringup disable-ros2-soem-bringup logs-ros2-soem-bringup logs-recent-ros2-soem-bringup start-ros2-infantry-chassis stop-ros2-infantry-chassis restart-ros2-infantry-chassis status-ros2-infantry-chassis enable-ros2-infantry-chassis disable-ros2-infantry-chassis logs-ros2-infantry-chassis logs-recent-ros2-infantry-chassis
 
 help:
 	@echo "Targets:"
+	@echo "  make upgrade                # self-upgrade ros2-systemd-manager via pip"
 	@echo "  make install                # install unit files only"
 	@echo "  make apply                  # install + start + enable"
 	@echo "  make start                  # systemctl start all configured units"
@@ -36,6 +37,9 @@ ensure-config:
 		echo "ERROR: no yaml config found in current directory (expected ./ros2_services.yaml or ./*.yaml)."; \
 		exit 1; \
 	fi
+
+upgrade:
+	$(EFFECTIVE_SCRIPT) upgrade
 
 install: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) install --config "$(EFFECTIVE_CONFIG)" --workspace-key "$(WORKSPACE_KEY)"

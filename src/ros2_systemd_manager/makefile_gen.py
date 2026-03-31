@@ -154,6 +154,7 @@ logs-recent-{service_key}:
     phony_targets = " ".join(
         [
             "help",
+            "upgrade",
             "ensure-config",
             "install",
             "apply",
@@ -190,7 +191,8 @@ EFFECTIVE_CONFIG := $(if $(strip $(CONFIG)),$(CONFIG),$(firstword $(wildcard ./r
 .PHONY: {phony_targets}
 
 help:
-\t@echo \"Targets:\"
+	@echo \"Targets:\"
+	@echo \"  make upgrade                # self-upgrade ros2-systemd-manager via pip\"
 	@echo \"  make install                # install unit files only\"
 	@echo \"  make apply                  # install + start + enable\"
 	@echo \"  make start                  # systemctl start all configured units\"
@@ -212,6 +214,9 @@ ensure-config:
 		echo "ERROR: no yaml config found in current directory (expected ./ros2_services.yaml or ./*.yaml)."; \\
 		exit 1; \\
 	fi
+
+upgrade:
+	$(EFFECTIVE_SCRIPT) upgrade
 
 install: ensure-config
 	$(SUDO) $(EFFECTIVE_SCRIPT) install --config \"$(EFFECTIVE_CONFIG)\" --workspace-key \"$(WORKSPACE_KEY)\"

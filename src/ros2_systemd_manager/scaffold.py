@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import getpass
+import re
 from importlib import resources
 from pathlib import Path
-import re
 
 import yaml
 

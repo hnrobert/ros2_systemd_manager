@@ -5,6 +5,7 @@
         "firstword",
         "geteuid",
         "journalctl",
+        "lastword",
         "pycache",
         "setuptools",
         "soem"

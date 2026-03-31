@@ -1,5 +1,6 @@
 SUPPORTED_ACTIONS = {
     "init",
+    "upgrade",
     "install",
     "apply",
     "uninstall",

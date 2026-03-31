@@ -1,19 +1,17 @@
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
 
-from .config import (
-    load_yaml_config,
-    resolve_action,
-    resolve_workspace_key,
-    validate_config,
-)
+from .config import (load_yaml_config, resolve_action, resolve_workspace_key,
+                     validate_config)
 from .makefile_gen import write_makefile
 from .runtime import err, log, require_root
 from .scaffold import init_defaults
-from .systemd_ops import install_only, install_start_enable, sync_update, uninstall
+from .systemd_ops import (install_only, install_start_enable, sync_update,
+                          uninstall)
 
 
 def _default_config_path() -> str:
@@ -32,7 +30,7 @@ def parse_args() -> argparse.Namespace:
         "action",
         nargs="?",
         help=(
-            "Optional: init | install | apply | uninstall | update | makefile; "
+            "Optional: init | upgrade | install | apply | uninstall | update | makefile; "
             "defaults to YAML action"
         ),
     )
@@ -59,6 +57,20 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _upgrade_self() -> None:
+    package_name = "ros2-systemd-manager"
+    in_virtual_env = sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+
+    cmd = [sys.executable, "-m", "pip", "install", "--upgrade"]
+    if not in_virtual_env and os.geteuid() != 0:
+        cmd.append("--user")
+    cmd.append(package_name)
+
+    log(f"Upgrading package with: {' '.join(cmd)}")
+    subprocess.run(cmd, check=True)
+    log("Upgrade completed.")
+
+
 def run() -> None:
     args = parse_args()
     action_arg = args.action
@@ -70,6 +82,10 @@ def run() -> None:
         init_defaults(target_config, target_workspace_key, force=args.force)
         return
 
+    if action_arg == "upgrade":
+        _upgrade_self()
+        return
+
     config_path = Path(args.config) if args.config else Path(
         _default_config_path())
     config = load_yaml_config(config_path)
@@ -78,7 +94,7 @@ def run() -> None:
     action = resolve_action(action_arg, config)
     workspace_key = resolve_workspace_key(args.workspace_key, config)
 
-    if action != "makefile":
+    if action not in {"makefile", "upgrade"}:
         require_root()
 
     log(f"Config file: {config_path}")
@@ -96,6 +112,9 @@ def run() -> None:
             Path(args.previous_makefile) if args.previous_makefile else None
         )
         sync_update(config, workspace_key, previous_makefile)
+    elif action == "upgrade":
+        _upgrade_self()
+        return
     elif action == "makefile":
         log("Skipping systemd operations; refreshing Makefile only.")
 
