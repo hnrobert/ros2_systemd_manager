@@ -56,23 +56,26 @@ def init_defaults(config_path: Path, workspace_key: str, force: bool = False) ->
         yaml_text, "group", current_user)
     yaml_text = _replace_first_yaml_line_value(yaml_text, "home", current_home)
 
-    # Keep example workspace key, but personalize the path's user/home prefix.
+    # Dynamically set workspace key to current directory name and path to current path.
     template_cfg = yaml.safe_load(yaml_text)
     if isinstance(template_cfg, dict):
         template_workspaces = template_cfg.get("workspaces", {})
         if isinstance(template_workspaces, dict) and template_workspaces:
             template_workspace_key = next(iter(template_workspaces.keys()))
-            template_workspace = template_workspaces.get(
-                template_workspace_key, {})
-            template_path = ""
-            if isinstance(template_workspace, dict):
-                template_path = str(template_workspace.get("path", "")).strip()
-
-            path_leaf = Path(
-                template_path).name if template_path else "default_ws"
-            workspace_path = str(Path.home() / path_leaf)
+            
+            current_dir = Path.cwd()
+            ws_name = current_dir.name
+            ws_path = str(current_dir)
+            
+            yaml_text = re.sub(
+                rf"^(\s*){re.escape(template_workspace_key)}:", 
+                rf"\1{ws_name}:", 
+                yaml_text, 
+                count=1, 
+                flags=re.MULTILINE
+            )
             yaml_text = _replace_first_yaml_line_value(
-                yaml_text, "path", workspace_path)
+                yaml_text, "path", ws_path)
 
     config = yaml.safe_load(yaml_text)
     if not isinstance(config, dict):
