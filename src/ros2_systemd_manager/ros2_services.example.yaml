@@ -8,6 +8,10 @@
 #    Example: if A depends_on B, unit A will include Requires=B and After=B
 # 5) services can optionally declare service_options (list of raw systemd [Service] lines)
 #    Example: CapabilityBoundingSet=... / AmbientCapabilities=...
+# 6) services can optionally declare use_isolated_cpu (string) to pin to GRUB-isolated CPU cores
+#    This wraps ExecStart with taskset -c and works alongside service_options CPUAffinity
+# 6) services can optionally declare use_isolated_cpu (string) to pin to GRUB-isolated CPU cores
+#    This wraps ExecStart with taskset -c and works alongside service_options CPUAffinity
 #
 # Supported actions:
 # - upgrade                Self-upgrade this tool via pip install --upgrade
@@ -53,6 +57,7 @@ workspaces:
       - unit_name: ros2-soem-bringup.service
         description: ROS2 Simple Open EtherCAT Master Bringup (https://github.com/AIMEtherCAT/EcatV2_Master)
         use_root: false
+        use_isolated_cpu: "0" # Optional: pin to GRUB-isolated CPU core(s) via taskset, e.g. "0" or "0 1"
         service_options: # Example of granting specific capabilities to a service without running as root
           - CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
           - AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .config import (load_yaml_config, resolve_action, resolve_workspace_keys,
                      validate_config)
+from .docs import show_cpu_isolation_doc
 from .makefile_gen import write_makefile
 from .runtime import err, log, require_root
 from .scaffold import init_defaults
@@ -46,7 +47,8 @@ def parse_args() -> argparse.Namespace:
         "  update         Sync systemd with YAML (stops old/removed, updates tracked hashes)\n"
         "  uninstall      Stop, disable, and securely remove unit files\n"
         "  makefile       Regenerate the local Makefile helper only\n"
-        "  upgrade        Self-upgrade this CLI tool remotely via pip\n\n"
+        "  upgrade        Self-upgrade this CLI tool remotely via pip\n"
+        "  cpu            Display CPU isolation setup guide (GRUB isolcpus)\n\n"
         "EXAMPLES:\n"
         "  ros2-systemd-manager init --force\n"
         "  sudo ros2-systemd-manager apply --config ./ros2_services.yaml\n"
@@ -116,6 +118,10 @@ def run() -> None:
 
     if action_arg == "upgrade":
         _upgrade_self()
+        return
+
+    if action_arg == "cpu":
+        show_cpu_isolation_doc()
         return
 
     config_path = Path(args.config) if args.config else Path(

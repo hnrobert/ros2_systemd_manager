@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+from .docs import show_cpu_isolation_doc
 from .makefile_gen import write_makefile
 from .runtime import err, log
 
@@ -92,3 +93,15 @@ def init_defaults(config_path: Path, force: bool = False) -> None:
 
     write_makefile(config, config_path)
     log("Default Makefile generated.")
+
+    # Show CPU isolation guide on first install
+    print()
+    log("CPU Isolation Setup Guide (GRUB isolcpus + use_isolated_cpu):")
+    print("=" * 60)
+    show_cpu_isolation_doc()
+    print("=" * 60)
+    print()
+    log(
+        "To use CPU isolation: configure GRUB as described above, "
+        "then add use_isolated_cpu: \"X\" (e.g. \"0\") to your service in the YAML."
+    )

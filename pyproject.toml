@@ -34,4 +34,4 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-ros2_systemd_manager = ["ros2_services.example.yaml"]
+ros2_systemd_manager = ["ros2_services.example.yaml", "docs/CPU_isolation.md"]

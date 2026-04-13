@@ -18,6 +18,7 @@ def build_unit_content(
     depends_on: List[str],
     service_options: List[str],
     use_root: bool,
+    isolated_cpu: str,
     runtime: Dict[str, Any],
     wanted_by: str,
 ) -> str:
@@ -42,6 +43,11 @@ def build_unit_content(
     service_options_lines = "\n".join(service_options)
     service_options_block = f"{service_options_lines}\n" if service_options_lines else ""
 
+    # Build ExecStart with optional taskset wrapping for GRUB-isolated CPUs
+    exec_cmd = f'{shell} -lc \'source "{setup_script_abs}" && exec {launch_command}\''
+    if isolated_cpu:
+        exec_cmd = f"/usr/bin/taskset -c {isolated_cpu} {exec_cmd}"
+
     return f"""[Unit]
 Description={description}
 {requires_line}After={after_line}
@@ -53,7 +59,7 @@ User={user}
 Group={group}
 WorkingDirectory={workspace_path}
 Environment=HOME={home}
-ExecStart={shell} -lc 'source "{setup_script_abs}" && exec {launch_command}'
+ExecStart={exec_cmd}
 {service_options_block}Restart={restart}
 RestartSec={restart_sec}
 
@@ -105,6 +111,7 @@ def install_only(config: Dict[str, Any], workspace_keys: List[str]) -> List[str]
             depends_on = svc.get("depends_on", [])
             service_options = svc.get("service_options", [])
             use_root = bool(svc.get("use_root", False))
+            isolated_cpu = str(svc.get("use_isolated_cpu", "")).strip()
 
             if not isinstance(depends_on, list):
                 err(f"Service {unit_name} has invalid depends_on: expected a list.")
@@ -129,6 +136,7 @@ def install_only(config: Dict[str, Any], workspace_keys: List[str]) -> List[str]
                 depends_on=depends_on,
                 service_options=service_options,
                 use_root=use_root,
+                isolated_cpu=isolated_cpu,
                 runtime=runtime_cfg,
                 wanted_by=wanted_by,
             )

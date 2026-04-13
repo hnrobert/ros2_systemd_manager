@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -71,6 +72,18 @@ def validate_config(config: Dict[str, Any]) -> None:
                 unit_name = svc.get("unit_name", "<unknown>")
                 err(f"Service {unit_name} has invalid use_root: expected true/false.")
                 sys.exit(1)
+
+            use_isolated_cpu = svc.get("use_isolated_cpu")
+            if use_isolated_cpu is not None:
+                unit_name = svc.get("unit_name", "<unknown>")
+                if not isinstance(use_isolated_cpu, str) or not re.match(
+                    r"^\d+(\s+\d+)*$", use_isolated_cpu.strip()
+                ):
+                    err(
+                        f"Service {unit_name} has invalid use_isolated_cpu: "
+                        f"expected space-separated CPU core numbers, e.g. '0' or '0 1'."
+                    )
+                    sys.exit(1)
 
             service_options = svc.get("service_options")
             if service_options is not None:
