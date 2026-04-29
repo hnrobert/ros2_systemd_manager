@@ -5,8 +5,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .config import (get_help_text, load_yaml_config, resolve_action,
+from .config import (get_help_text, load_yaml_config,
                      resolve_workspace_keys, validate_config)
+from .domain import set_domain_id
 from .makefile_gen import write_makefile
 from .runtime import err, log, require_root
 from .scaffold import init_defaults
@@ -34,16 +35,18 @@ def get_help_text() -> str:
     """Return the help text for the CLI."""
     return (
         "SUPPORTED ACTIONS:\n"
-        "  init           Create a default YAML template and Makefile\n"
-        "  install        Install unit files but do not start them\n"
-        "  apply          Install, start, and enable unit files on boot\n"
-        "  update         Sync systemd with YAML (stops old/removed, updates tracked hashes)\n"
-        "  uninstall      Stop, disable, and securely remove unit files\n"
-        "  makefile       Regenerate the local Makefile helper only\n"
-        "  upgrade        Self-upgrade this CLI tool remotely via pip\n\n"
+        "  init                Create a default YAML template and Makefile\n"
+        "  install             Install unit files but do not start them\n"
+        "  apply               Install, start, and enable unit files on boot\n"
+        "  update              Sync systemd with YAML (stops old/removed, updates tracked hashes)\n"
+        "  uninstall           Stop, disable, and securely remove unit files\n"
+        "  makefile            Regenerate the local Makefile helper only\n"
+        "  upgrade             Self-upgrade this CLI tool remotely via pip\n"
+        "  set-domain-id <N>   Set ROS_DOMAIN_ID in all shell profile/rc files\n\n"
         "EXAMPLES:\n"
         "  ros2-systemd-manager init --force\n"
         "  sudo ros2-systemd-manager apply --config ./ros2_services.yaml\n"
+        "  sudo ros2-systemd-manager set-domain-id 42\n"
         "  sudo ros2-systemd-manager uninstall"
     )
 
@@ -76,6 +79,11 @@ def parse_args() -> argparse.Namespace:
         "action",
         nargs="?",
         help="Action to perform (default: actions.default_action in YAML)",
+    )
+    parser.add_argument(
+        "domain_id",
+        nargs="?",
+        help="Domain ID for set-domain-id action",
     )
     parser.add_argument(
         "-c", "--config",
@@ -121,6 +129,7 @@ def run() -> None:
         print(get_help_text())
         sys.exit(1)
 
+    # Actions that don't need a config file
     if action_arg == "init":
         target_config = Path(args.config) if args.config else (
             Path.cwd() / "ros2_services.yaml")
@@ -131,15 +140,29 @@ def run() -> None:
         _upgrade_self()
         return
 
+    if action_arg == "set-domain-id":
+        if not args.domain_id:
+            err("Usage: ros2-systemd-manager set-domain-id <number>")
+            sys.exit(1)
+        try:
+            domain = int(args.domain_id)
+        except ValueError:
+            err(f"Invalid domain ID: {args.domain_id} (must be an integer)")
+            sys.exit(1)
+        require_root()
+        set_domain_id(domain)
+        return
+
+    # Actions that need a config file
     config_path = Path(args.config) if args.config else Path(
         _default_config_path())
     config = load_yaml_config(config_path)
     validate_config(config)
 
-    action = resolve_action(action_arg, config)
+    action = action_arg or config.get("actions", {}).get("default_action", "apply")
     workspace_keys = resolve_workspace_keys(args.workspace_key, config)
 
-    if action not in {"makefile", "upgrade"}:
+    if action in {"install", "apply", "uninstall", "update"}:
         require_root()
 
     log(f"Config file: {config_path}")
@@ -153,13 +176,14 @@ def run() -> None:
     elif action == "uninstall":
         uninstall(config, workspace_keys)
     elif action == "update":
-
         sync_update(config, workspace_keys)
-    elif action == "upgrade":
-        _upgrade_self()
-        return
     elif action == "makefile":
         log("Skipping systemd operations; refreshing Makefile only.")
+    else:
+        err(f"Unsupported action: {action}")
+        print("")
+        print(get_help_text())
+        sys.exit(1)
 
     write_makefile(config, config_path)
 
