@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .config import (get_help_text, load_yaml_config, resolve_action,
+from .config import (get_help_text, load_yaml_config,
                      resolve_workspace_keys, validate_config)
 from .domain import set_domain_id
 from .makefile_gen import write_makefile
@@ -129,6 +129,7 @@ def run() -> None:
         print(get_help_text())
         sys.exit(1)
 
+    # Actions that don't need a config file
     if action_arg == "init":
         target_config = Path(args.config) if args.config else (
             Path.cwd() / "ros2_services.yaml")
@@ -152,15 +153,16 @@ def run() -> None:
         set_domain_id(domain)
         return
 
+    # Actions that need a config file
     config_path = Path(args.config) if args.config else Path(
         _default_config_path())
     config = load_yaml_config(config_path)
     validate_config(config)
 
-    action = resolve_action(action_arg, config)
+    action = action_arg or config.get("actions", {}).get("default_action", "apply")
     workspace_keys = resolve_workspace_keys(args.workspace_key, config)
 
-    if action not in {"makefile", "upgrade"}:
+    if action in {"install", "apply", "uninstall", "update"}:
         require_root()
 
     log(f"Config file: {config_path}")
@@ -174,13 +176,14 @@ def run() -> None:
     elif action == "uninstall":
         uninstall(config, workspace_keys)
     elif action == "update":
-
         sync_update(config, workspace_keys)
-    elif action == "upgrade":
-        _upgrade_self()
-        return
     elif action == "makefile":
         log("Skipping systemd operations; refreshing Makefile only.")
+    else:
+        err(f"Unsupported action: {action}")
+        print("")
+        print(get_help_text())
+        sys.exit(1)
 
     write_makefile(config, config_path)
 

@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional
 
 import yaml
 
-from .actions import SUPPORTED_ACTIONS
 from .runtime import err
 
 
@@ -127,21 +126,6 @@ def validate_config(config: Dict[str, Any]) -> None:
                         f"Service {unit_name} has invalid service_options: expected a string list."
                     )
                     sys.exit(1)
-
-
-def resolve_action(cli_action: Optional[str], config: Dict[str, Any]) -> str:
-    """Resolve action from CLI or YAML defaults."""
-    default_action = config.get("actions", {}).get("default_action", "apply")
-    action = cli_action or default_action
-
-    if action not in SUPPORTED_ACTIONS:
-        err(f"Unsupported action: {action}")
-        print(f"Allowed actions: {', '.join(sorted(SUPPORTED_ACTIONS))}")
-        print("")
-        print(get_help_text())
-        sys.exit(1)
-
-    return action
 
 
 def resolve_workspace_keys(cli_workspace_key: Optional[str], config: Dict[str, Any]) -> list[str]:
